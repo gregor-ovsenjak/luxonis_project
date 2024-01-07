@@ -1,0 +1,51 @@
+version: '3.9'
+
+services:
+  postgres:
+    image: postgres:latest
+    container_name: my_postgres_db
+    environment:
+      POSTGRES_DB: mydatabase
+      POSTGRES_USER: myuser
+      POSTGRES_PASSWORD: mypassword
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - my_network
+
+  scrapy:
+    build: 
+      context: ./luxonis
+      dockerfile: Dockerfile_scrapy
+    depends_on:
+      - postgres
+    volumes:
+      - ./luxonis:/app
+    networks:
+      - my_network
+    command: scrapy crawl sreality  
+
+  create_site:
+    build: 
+      context: ./create_site
+      dockerfile: Dockerfile_site
+    ports:
+      - "8080:8080"
+    depends_on:
+      - postgres
+      - scrapy
+    networks:
+      - my_network
+    volumes:
+      - ./create_site:/app
+
+volumes:
+  postgres_data:
+
+networks:
+  my_network:
+    driver: bridge
+
+
